@@ -18,7 +18,7 @@ module load gcc/5
 module load qctool/v2.0.5
 
 # choose chr number
-chr=${SLURM_ARRAY_TASK_ID}
+chr=1
 
 # make new bgen
 
@@ -42,3 +42,4 @@ qctool -g "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/b
 module load ceuadmin/bgenix/1.0.2
 
 bgenix -g "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/chunks/bgens/black_MAFf_chr${chr}.bgen" -index
+
