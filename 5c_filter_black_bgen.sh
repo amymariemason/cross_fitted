@@ -2,8 +2,8 @@
 #SBATCH --time=12:0:0
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=1
-#SBATCH --mem=5G
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=10G
 #SBATCH --job-name=qctool2_black
 #FILENAME: qctool_cutout
 #AUTHOR : Amy Mason
