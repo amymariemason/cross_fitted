@@ -1,0 +1,558 @@
+---
+title: "Cross fitting in black cohort report"
+author: "Amy Mason"
+date: "`r Sys.Date()`"
+output: html_document
+params: 
+  exposure: "ln_uacr"
+  outcome: "cad_int"
+  outcome_family: "binomial"
+  sig_cutoffs: !r 5e-7
+  covar.num: !r c("ages","PC1","PC2","PC3","PC4", "PC5", "PC6","PC7","PC8","PC9", "PC10")
+  covar.factor: !r c("sex")
+  splits: 20
+  path.input: ""
+  path.genome: "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/chunks/backingfile/chr_1_22_all.rds"
+  path.sample: "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/data/black.sample"
+  path.sample_stats: "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/data/sample-stats.txt"
+  save.all.output: FALSE # saves all GWAS for all subsamples
+  save.topGWAS.output: TRUE # saves top 10000 hits on GWAS for each sample
+  save.instrument: TRUE # saves subgroup numbers & instrument
+  save.sample: FALSE # saves original sample with subgroup numbers and instrument
+  path.output: "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Output/"
+  path.names_out_prefix: "Black_CXfit_" # will add outcome & split#
+  # phewas/covariate association options
+  PHEWAS.check: TRUE # checks snps selected with phewas, remove if reach covar.cutoff 
+  PHEWAS.remove: !r NULL # remove snps that match on this trait 
+  covariate.check: TRUE # run GWAS on black cohort for following covariates, remove if reach covar.cutoff
+  covariate.remove: !r NULL # must be in sample
+  covar.cutoff: !r NULL # defaults to p_threshold if null
+  snp.remove: !r NULL # to force removal of snps that are correlated with other causal factors
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r define parameters, include=FALSE}
+# load packages
+library(bigsnpr)
+library(dplyr)
+library(cowplot)
+library(ieugwasr)
+#library(ivreg)
+library(ivtools)
+
+#inputs
+
+var.name<-params$exposure
+no_of_loops =params$splits
+covar.num=params$covar.num
+# covariates will be treated as numeric unless in this list
+covar.factors = params$covar.factor
+sig_cutoff<- params$sig_cutoff
+
+thr_clump = 0.001
+size_clump = 100 /0.001
+
+# for the MR step
+outcome<-params$outcome
+outcome.family<-params$outcome_family
+G.est=FALSE
+boot=FALSE
+
+## data input
+
+path.genome<- paste0(params$path.input,params$path.genome)
+path.sample<- paste0(params$path.input,params$path.sample)
+path.sample_stats<-paste0(params$path.input,params$path.sample_stats)
+
+# data output
+path.sample_out <- paste0(params$path.output, params$path.names_out_prefix, var.name,  "_",as.character(sig_cutoff),"_thres_", params$splits,"splits.sample")
+path.all_data_out<- paste0(params$path.output, params$path.names_out_prefix, var.name, "_",params$splits,"splits_alldata.Rdata")
+path.GWAS_data_out<- paste0(params$path.output, params$path.names_out_prefix, var.name, "_",params$splits,"splits_topGWAS.csv")
+path.instrument_out<- paste0(params$path.output, params$path.names_out_prefix, var.name, "_", as.character(sig_cutoff),"_thres_",params$splits,"splits_instrument.csv")
+
+
+# plieotropy checks
+
+PHEWAS.check= params$PHEWAS.check # checks snps selected with phewas, prints table for each 
+PHEWAS.remove= params$PHEWAS.remove# remove snps that match on this trait
+
+covariate.check=params$covariate.check # run GWAS for following covariates, remove if reach sig_cutoff
+covariate.remove = params$covariate.remove
+
+covar.cutoff = ifelse(is.null(params$covar.cutoff), params$sig_cutoffs, params$covar.cutoff)
+
+snp.remove = params$snp.remove
+
+
+```
+
+
+
+```{r load data, warning=TRUE, include=FALSE}
+###################################
+# setup data
+# load  stored genome data
+
+bigSNP <-snp_attach(params$path.genome)
+
+
+# Get aliases for useful slots
+G   <- bigSNP$genotypes
+CHR <- as.integer(bigSNP$map$chromosome)
+POS <- bigSNP$map$physical.pos
+rsids<- bigSNP$map$rsid
+# Check some counts for the 10 first SNPs
+big_counts(G, ind.col = 1:10)
+
+# create snp map
+
+map <- transmute(bigSNP$map,
+         chr = as.integer(chromosome), 
+         pos = physical.pos,
+         a0 = allele1, a1 = allele2) 
+
+# Load sample data
+sample <- read.csv(params$path.sample, sep="")
+sample<-sample[-1,]
+
+# QC on samples
+sample.stats <- read.table(params$path.sample_stats, header=TRUE, quote="\"")
+assertthat::assert_that(max(sample.stats$missing_call_proportion)<0.03)
+
+
+# make sure it is numeric!
+covar.list=union(covar.num, covar.factors)
+
+sample<- sample %>%
+  mutate(across(all_of(covar.num), as.double)) %>%
+  mutate(across(all_of(covar.factors), as.factor))  %>%
+  mutate(across(all_of(var.name), as.double)) %>%
+  mutate(across(all_of(covariate.remove), as.double))
+
+
+# remove people with missing data
+
+print(paste0("sample size is ", nrow(sample)))
+
+missing<-which(is.na(sample[,var.name]))
+
+print("removing people with missing values")
+print(paste0("outcome:", var.name, ": ",length(missing)))
+
+sample2<-sample[!is.na(sample[,var.name]),]
+
+
+##Clumping on snps (already somewhat filtered  -see step 4)
+
+# Half of the cores you have on your computer
+NCORES <- nb_cores()
+# Exclude Long-Range Linkage Disequilibrium Regions of the human genome
+# based on an online table. https://genome.sph.umich.edu/wiki/Regions_of_high_linkage_disequilibrium_(LD)
+excl1 <- snp_indLRLDR(infos.chr = CHR, infos.pos = POS)
+# rsid does duplicate some snps so filter on MAF again at same level at step 5 
+maf <- snp_MAF(bigSNP$genotypes)
+excl2<- which(maf<0.01)
+# remove snps chosen by user
+excl3<- which(rsids %in% params$snp.remove)
+ind.excl = union(excl1, excl2)
+ind.excl = union(ind.excl, excl3)
+# Use clumping (on the MAF) to keep SNPs weakly correlated with each other.
+ind.keep <- snp_clumping(G, infos.chr = CHR,
+                         thr.r2 = 0.2,
+                         exclude = ind.excl,
+                         ncores = NCORES)
+
+# create subset of clumped variants
+df_beta0<-bigSNP$map %>%
+    transmute(rsid=rsid,chr=as.integer(chromosome), pos=as.integer(physical.pos),a0=allele1, a1=allele2, freq=freq)
+df_beta2<-df_beta0[ind.keep,]
+
+## create random sample sets
+
+## add sample numbers at random
+resample <- function(x, ...) x[sample.int(length(x), ...)]
+randomiser<-resample(rep(1:no_of_loops,nrow(sample[-missing,])/no_of_loops+1)[1:nrow(sample[-missing, ])])
+
+sample$sample_no<-NA
+sample[-missing,]$sample_no<-randomiser
+
+
+# create empty outputs
+  GWAS_output<-  list(GWAS=vector("list", no_of_loops), 
+                      MANHATTEN =  vector("list", no_of_loops),
+                      QQ = vector("list", no_of_loops))
+  PRS_model <- vector("list", no_of_loops) 
+  instrument <- rep(NA, nrow(sample))
+  report<-vector("list", no_of_loops) 
+  if (PHEWAS.check==TRUE) { phewas.report<-NULL}
+  if (covariate.check==TRUE) { covar.report<-vector("list", no_of_loops)}
+
+```
+
+
+
+```{r GWAS, message=FALSE, warning=TRUE, include=FALSE}
+# create instrument 
+
+# DO THE GWAS
+for (j in seq_len(no_of_loops)) {
+  print(j)
+  new_var= var.name 
+  y_index =  which(sample$sample_no!=j)
+  y_validation = which(sample$sample_no==j)
+
+
+  obj.gwas <- big_univLinReg(G,
+    y.train = sample[y_index, new_var],
+    ind.train = y_index,
+    ind.col = ind.keep,
+    covar.train = covar_from_df(sample[y_index, covar.list]),  # already regressed on sex, ages, PC1-PC10
+    thr.eigval = 1e-04,
+    ncores = NCORES
+  )
+
+  GWAS_output$GWAS[[j]]<-obj.gwas
+  GWAS_output$MANHATTEN[[j]] <- snp_manhattan(GWAS_output$GWAS[[j]], CHR[ind.keep], POS[ind.keep], npoints=1000)
+  GWAS_output$QQ[[j]]<-snp_qq(GWAS_output$GWAS[[j]])
+
+  
+  # get beta values from GWAS
+  GWAS_output$GWAS[[j]]$p<-predict(GWAS_output$GWAS[[j]],log10=FALSE)
+  GWAS_output$GWAS[[j]]$man_p<- -predict(GWAS_output$GWAS[[j]],log10=TRUE)
+  
+}
+
+
+ 
+   # phewas check
+  
+  if (PHEWAS.check==TRUE) {
+    
+    # find all "significant" snps in any run to check for plieotropy
+    any_sig<- unique(unlist(lapply(seq_along(GWAS_output$GWAS), FUN = function(x){which(GWAS_output$GWAS[[x]]$man_p>-log10(sig_cutoff))
+      } )))
+    phewas.table<-phewas(rsids[ind.keep[any_sig]], pval=covar.cutoff)
+    if (length(PHEWAS.remove)>0 & length(phewas.table)>0){
+      phewas.issue<-phewas.table[phewas.table$trait %in% PHEWAS.remove,]
+      phewas.rsid.remove <- which(rsids %in% phewas.issue$rsid)
+    }else{
+      phewas.rsid.remove<-NULL
+    }
+    phewas.report<-phewas.table  
+  }
+  
+
+  
+  # within sample association
+  if (covariate.check==TRUE){
+    covar.report<-lapply(seq_along(GWAS_output$GWAS), FUN=function(j){
+    covar.gwas.report<-NULL
+    covar.gwas<-NULL
+    for (covar in seq_along(covariate.remove)){
+      data<- which(!is.na(sample[,covariate.remove[covar]]) & sample$sample_no!=j )
+      snps<- ind.keep[which(GWAS_output$GWAS[[j]]$man_p>-log10(sig_cutoff))]
+    covar.gwas <- big_univLinReg(G,
+                               y.train = sample[data, covariate.remove[covar]],
+                               ind.train = data,
+                               ind.col = snps,
+                               covar.train = covar_from_df(sample[data, covar.list]),  
+                               thr.eigval = 1e-04,
+                               ncores = NCORES)
+    covar.gwas$rsid<-rsids[snps]
+    covar.gwas$p<-predict(covar.gwas,log10=FALSE)
+    covar.gwas$trait<-covariate.remove[covar]
+    covar.gwas <-covar.gwas[covar.gwas$p<=covar.cutoff,]
+    covar.gwas.report<-rbind(covar.gwas.report, covar.gwas)
+    }
+    
+
+    return(tibble(covar.gwas.report))
+    })
+    
+  }
+# loop over samples again to create PRS 
+errormark=0
+for (j in seq_len(no_of_loops)) {
+  print(j)
+  new_var= var.name 
+  y_index =  which(sample$sample_no!=j)
+  y_validation = which(sample$sample_no==j)
+  
+  # choose clump snps from GWAS
+  
+    df_beta1 <- GWAS_output$GWAS[[j]] %>%
+    transmute(beta = estim, beta_se = std.err, n_eff = length(y_index))
+    sum_stats<-cbind(df_beta2, df_beta1)
+    
+    
+  # weight snps by significance
+  S <- rep(NA, ncol(G)); 
+  S[ind.keep] <- GWAS_output$GWAS[[j]]$man_p
+
+  # sig cut off
+
+  signif=(S> -log10(sig_cutoff))
+  
+  # create not exclusion group - all of snps excluded before, any that are not significant
+  
+  ind.excl2= union(which(is.na(S)), which(!signif))
+    
+    
+  # remove plieotropic snps
+  if (covariate.check==TRUE){  
+    covar.rsid.remove <-which(rsids %in% covar.report[[j]]$rsid)
+    ind.excl2= union(ind.excl2, covar.rsid.remove)
+  }
+
+  if (PHEWAS.check==TRUE){  
+    ind.excl2= union(ind.excl2, phewas.rsid.remove)
+  }
+
+  
+  # clump again, prioritizing significance?
+  
+  ind.keep2 <- snp_clumping(G, 
+                           infos.chr = map$chr, 
+                           infos.pos = map$pos, 
+                           S = S,
+                           ind.row = y_index, 
+                           thr.r2 = thr_clump, 
+                           size = size_clump, 
+                           ncores = NCORES,
+                           exclude = ind.excl2 )
+  
+  if (is.null(ind.keep2)){
+    errormark=1
+    stop (paste0("no snps found at this p-value threshold in set" , j) )
+  }
+  df_beta_find <- snp_match(sum_stats, map[ind.keep2,],strand_flip = FALSE)[,c("chr", "pos", "a0", "a1","beta", "beta_se")]
+  df_beta <- snp_match(df_beta_find, map,strand_flip = FALSE)
+  
+
+  # create genetic prediction for people in the application set i.e. who were NA in discovery set
+  
+  sample$PRS_value <- big_prodMat(X=G,as.matrix(df_beta$beta), ind.col = df_beta[["_NUM_ID_"]],
+                            ncores = NCORES)
+  
+  
+  # fit model on training set and use to predict values in validation set
+  #formula<- as.formula(paste(new_var, "~ PRS_value+", paste(covar.list, collapse="+")))
+  formula2<- as.formula(paste(new_var, "~ PRS_value"))
+  PRS_model[[j]]<- lm(formula2, data = sample[y_index,])
+  
+  predict_test = predict(PRS_model[[j]], newdata=sample[y_validation,])
+  instrument[y_validation]<- predict_test
+
+  PRS_model[[j]]$error<- sqrt(mean((sample[y_validation,new_var]- predict_test)^2))
+  names(PRS_model[[j]]$error)<-"RMSE"
+  
+  
+  # report on each stage in quick summary
+  
+  report[[j]]<- c("sample" = j ,
+                  "train_n"= length(y_index),
+                  "predict_n" = length(y_validation),
+                  "no_of_snps" = length(ind.keep2),
+                  "PRS_score" = summary(PRS_model[[j]])$coef["PRS_value",3],
+                  "lm_model_r2" = summary(PRS_model[[j]])$r.squared,
+                  "RMSE" = PRS_model[[j]]$error)
+  
+
+  
+}
+sample$instrument <- instrument
+
+if (errormark==0){
+  if(params$save.all.output==TRUE) {
+
+save(GWAS_output, PRS_model, file = path.all_data_out)
+  }
+  
+
+  if(params$save.topGWAS.output==TRUE) {
+      
+       GWAS_mini<-bind_rows(GWAS_output$GWAS,.id="sample") %>%
+          group_by(sample) %>% 
+          arrange(p,.by_group = TRUE) %>%
+          slice(1:10000)
+
+write.table(GWAS_mini, file = path.GWAS_data_out)
+    }
+
+    if(params$save.instrument==TRUE) {
+      
+write.table(sample[,c("sample_no", "instrument")], file = path.instrument_out,
+            row.names=FALSE, quote=FALSE)
+
+    }
+
+    if(params$save.sample==TRUE) {
+      
+write.table(sample, params$path.sample_out, row.names=FALSE, quote=FALSE)
+
+    }
+} else {
+  warning ("no result saved as errors found in GWAS loop")
+}
+
+```
+
+
+
+
+```{r MR Steps, include=FALSE}
+## do MR analysis
+# ivreg method # NOT WORKING ON CSD3
+#if (outcome.family=="guassian") {
+  
+#  sample<- sample %>%
+#    mutate(across(all_of(outcome), as.numeric)) 
+
+#formula= as.formula(paste(outcome, 
+ #                         "~ ", var.name, 
+#                          "|",  paste(covar.list, collapse="+"),
+#                          "| instrument"))
+
+#fit.ivreg<- ivreg::ivreg(formula, data=sample )
+#summary<-summary(fit.ivreg)
+
+#}
+
+# iv tools method 
+
+if (outcome.family=="binomial") {
+
+sample<- sample %>%
+  mutate(across(all_of(outcome), as.factor)) 
+
+}
+
+
+#two-stage estimation
+formulaX.LZ= as.formula(paste(var.name, "~ instrument+", paste(covar.list, collapse="+")))
+formulaY.LZ=as.formula(paste(outcome, "~", var.name, " +", paste(covar.list, collapse="+")))
+fitX.LZ <- glm(formula=formulaX.LZ, data=sample)
+fitY.LX <- glm(formula=formulaY.LZ, data=sample, family=outcome.family)
+fitIV <- ivglm(estmethod="ts", fitX.LZ=fitX.LZ, fitY.LX=fitY.LX, data=sample,
+               ctrl=FALSE)
+
+summary<-summary(fitIV)
+
+
+
+
+if (outcome.family=="binomial" & G.est==TRUE) {
+## g-estimation method
+formulaZ.L= as.formula(paste("instrument~", paste(covar.list, collapse="+")))
+formulaY.LZX =as.formula(paste(outcome, "~ instrument +", var.name, " +", paste(covar.list, collapse="+")))
+
+fitZ.L <- glm(formula=formulaZ.L, data=sample)
+fitY.LZX <- glm(formula=formulaY.LZX, data=sample, family="binomial")
+
+fitIV_g <- ivglm(estmethod="g", X="ln_uacr", fitZ.L=fitZ.L, fitY.LZX=fitY.LZX, data=sample, link="logit")
+
+
+summary<-summary(fitIV_g)
+}
+
+
+# bootstrapped errors instead
+
+if (outcome.family=="binomial" & boot==TRUE) {
+
+library(boot)
+set.seed(1)
+
+bootfun <- function(data, indicies){ 
+  dd <- data[indicies, ] 
+  #two-stage estimation 
+  fitX.LZ <- glm(formula=formulaX.LZ, data=dd)
+  fitY.LX <- glm(formula=formulaY.LZ, data=dd, family="binomial")
+  fitIV_ts <- ivglm(estmethod="ts", fitX.LZ=fitX.LZ, fitY.LX=fitY.LX, data=dd,
+                    vcov.fit=FALSE, ctrl=FALSE)  
+  est_ts <- fitIV_ts$est["ln_uacr"] 
+  #G-estimation 
+  fitZ.L <- glm(formula=formulaZ.L, data=dd)
+  fitY.LZX <- glm(formula=formulaY.LZX, data=dd, family="binomial")
+  fitIV_g <- ivglm(estmethod="g", X="ln_uacr", fitZ.L=fitZ.L, 
+                   fitY.LZX=fitY.LZX, data=dd, link="logit", vcov.fit=FALSE) 
+  est_g <- fitIV_g$est["vitd_std"] 
+  return(c(est_ts, est_g)) 
+} 
+
+bb <- boot(data=sample, statistic=bootfun, R=100)
+apply(bb$t, MARGIN=2, FUN=sd, na.rm=TRUE)
+
+}
+
+
+```
+
+# Report
+
+With exposure: `r var.name`
+with outcome: `r outcome`  modelled using `r outcome.family`
+with covariates: `r paste(covar.list, collapse=",")`
+with p-threshold: `r sig_cutoff`
+Splitting `r nrow(sample)` people into  `r no_of_loops` sub-samples
+(first removing `r length(missing)` people with missing outcomes)
+
+```{r report, echo=FALSE}
+
+
+print("instrument correlation check")
+cor(data.frame("cad_int"=as.numeric(as.character(sample$cad_int)),sample[, union(c("instrument", var.name), params$covariate.remove)]), use="complete.obs")
+
+
+print("MR result")
+summary
+
+print("GWAS in sub-samples")
+do.call(rbind, report)
+for (j in seq_len(no_of_loops)) {
+f<-plot_grid(GWAS_output$MANHATTEN[[j]],GWAS_output$QQ[[j]], ncol=2)
+f<- f + draw_figure_label(label = paste0("GWAS excluding set ",j), color = "red", fontface = "bold", size = 14, position="top")
+print(f)
+
+}
+
+if (PHEWAS.check==TRUE | covariate.check==TRUE) {
+  print("snp plieotropy checks")
+  if (PHEWAS.check==TRUE) {
+    print(paste0("snps removed for PHEWAS hits matching list: ", 
+                 paste(PHEWAS.remove, collapse=",")))
+    print(phewas.rsid.remove)
+    
+    print("top hits by snp in overall Phewas report")
+    tibble(phewas.report) %>% 
+      select(c("rsid","p","trait")) %>%
+      arrange("p") %>%
+      group_by(rsid) %>% 
+      group_split() 
+    }
+  
+  if(covariate.check==TRUE) {
+    print(paste0("snps removed for internal correlation matching list: ", 
+                 paste(covariate.remove, collapse=",")))
+    
+
+      covar.report2<- dplyr::bind_rows(covar.report, .id="sample_no")
+      if (nrow(covar.report2)>0){ 
+      covar.report2 %>% 
+      select(c("rsid","p","trait", "sample_no")) %>%
+      arrange("p") %>%
+      group_by(rsid) %>% 
+      group_split() 
+      }else{NULL}
+    
+  }
+  
+}
+
+
+```

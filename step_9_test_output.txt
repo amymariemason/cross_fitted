@@ -1,0 +1,341 @@
+Loading required package: bigstatsr
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+     [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
+0     255  288 5225 2569 2569 5499  277  164 4351  3524
+1     553  597   83  720  720  166  595  539   79    58
+2     273  229    0   39   39    1  215  282    0     0
+<NA>    0    0    0    0    0    0    0    0    0     0
+0.01   47   39  186  104  104   37   52   43  500   548
+0.02   28   30  163  102  102   66   26   20  210   439
+0.03    6    9   69   62   62  194    8    7   52   460
+0.04    7   24  159  104  104    5    6    6  106   260
+0.05   12   13    7  361  361    2    8   10   65    85
+0.06    9    8    2   35   35    0   11    6   25    58
+0.07   18   11    1   29   29    0    8    8   55    89
+0.08    7    9   10   25   25    0    9    2   37    27
+0.09   13   12    2  239  239    0   11    4   43    37
+0.1     7    3    0   66   66    0    1    3   15    15
+0.11    7    3    7   35   35    0    5   10   45    16
+0.12   10   10    0   35   35    5    6    3    9    25
+0.13   14   16   11   92   92    0    7    9   25    34
+0.14    6    7    5  115  115    1   11    4   15    22
+0.15   11   20    2   62   62    0    7    5   10    10
+0.16    9   34    0  137  137    0    9    9   16    11
+0.17   22   32    0   34   34    0   24   20   17    18
+0.18   13   13    3   59   59    0    9    6   12     6
+0.19    6    8    0   27   27    0   13    5    8    17
+0.2     9    9    1   47   47    0    9   14   28    25
+0.21    4    8    0   28   28    0   16    6    5     4
+0.22   11   14    0   57   57    0   15   12    6     6
+0.23    8    9    0   34   34    0    7    9    5     5
+0.24   14    8    0   17   17    1    9    8    4     7
+0.25   19   36    0   21   21    0   27   18   21    22
+0.26   16   18    0   13   13    0   26    7    4     7
+0.27   14   12    0   19   19    0   20    6    9     6
+0.28    2   13    0   11   11    0   14    5    3     3
+0.29   20   26    0    9    9    0   22    9   12     8
+0.3     5   17    1    9    9    1   16    5    0     3
+0.31   10   12    0   19   19    0   16   10    4     3
+0.32    8   17    0   25   25    0    9   16    3     1
+0.33   35   50    0   12   12    0   30   21   67     4
+0.34   27   34    0    9    9    0   14   11    2     0
+0.35   27   13    0    7    7    0   35   19    8     3
+0.36   30   32    1   10   10    0   75   12    5     2
+0.37   81   24    0    6    6    0   36   15    2     0
+0.38   59   25    0   10   10    0   35   14    1     2
+0.39   28   51    0    9    9    0   38   14    3     3
+0.4    39  111    0    5    5    1   51   31    7     2
+0.41    6   18    0    6    6    0   30    5    3     2
+0.42   20   37    0    0    0    0   43   13    3     2
+0.43   28   12    0    4    4    1   18   14    1     0
+0.44   38   18    0    4    4    0   26   14    4     1
+0.45   25   22    0    4    4    1   30   17    2     2
+0.46   24   46    0    2    2    0   18   12    1     0
+0.47   27   57    0    2    2    0   26   17    1     1
+0.48   14   21    0    3    3    0   20   11    3     0
+0.49   34   45    0    7    7    0   58   13    4     2
+0.5    94  153    0    5    5    0  148   73   13    16
+0.51   46   51    0    8    8    0   65   26    0     1
+0.52   21   21    0    2    2    0   22   12    0     1
+0.53   24   47    0    2    2    0   37   10    2     1
+0.54   21   27    0    3    3    0   11    9    6     1
+0.55   18   31    0    4    4    0   16   19    0     0
+0.56   20   45    0   10   10    0   33   41    1     0
+0.57   33   18    0    2    2    0   25   11    0     1
+0.58   59   32    0    5    5    0   51   20    1     3
+0.59   29   17    0    2    2    0   14   38    2     4
+0.6    94   23    1   20   20    0   27   80    4     2
+0.61   22   10    0    2    2    0   20   43    0     1
+0.62   46   31    0    1    1    0   17   29    1     0
+0.63   15   12    1    2    2    0   20    7    0     1
+0.64   26   26    0    6    6    0   31   18    1     5
+0.65   18   31    0    5    5    0   19   26    0     2
+0.66   22   25    0    2    2    0   25   11    1     0
+0.67   51   53    0    5    5    0   54   48    0     1
+0.68   21   19    0    2    2    0   11   14    0     0
+0.69   21   34    0    3    3    0   31   31    4     1
+0.7    29   14    1    4    4    0   22   23    3     0
+0.71   27   33    0    2    2    0   35   28    0     0
+0.72   18   17    0    4    4    0   20   45    0     2
+0.73   29   38    0    3    3    0   44   27    0     2
+0.74   32   13    0    1    1    0   31   24    0     0
+0.75   38   34   13   10   10    1   44   86    1     1
+0.76   37   49    0    3    3    0   33   33    0     2
+0.77   23   16    1    2    2    0   22   24    2     0
+0.78   34   36    3    2    2    0   38   30    0     0
+0.79   22   27    0    1    1    0   18   16    1     0
+0.8    37   34    0    1    1    0   29   30    0     0
+0.81   16   21    0    4    4    0   14   19    0     0
+0.82   23   37    0    2    2    0   35   23    0     0
+0.83   16   33    0    3    3    0   18   32    0     1
+0.84   40   36    0    5    5    0   33   34    0     0
+0.85   33   43   14    8    8    0   26   36    0     0
+0.86   20   33    0    0    0    0   41   25    1     0
+0.87   35   24    4    4    4    0   38   24    1     0
+0.88   29   23    1    2    2    0   27   21    0     1
+0.89   34   64    0    5    5    0   48   26    1     4
+0.9    19   20    0    0    0    0   41   17    0     0
+0.91   27   34    0    2    2    0   38   25    3     0
+0.92   18   34    1    2    2    0   22   23    0     1
+0.93   34   28    0    4    4    0   39   36    1     0
+0.94   29   23    0   12   12    1   24   22    0     1
+0.95   40   32    1    1    1    0   46   39    0     1
+0.96   56   42    0    4    4    0   44   37    1     2
+0.97   30   17    0    7    7    0   30   30    1     1
+0.98   38   37    1   15   15    1   43   39    1     3
+0.99   57   59    1   21   21    0   45   56    1    11
+1.01   48   42    2   15   15    0   46   47    9     5
+1.02   44   37    0   13   13    0   41   38    1     7
+1.03   18   24    0    7    7    2   20   17    0     4
+1.04   36   27    1   22   22    0   27   40    0     3
+1.05   35   24    0   47   47    0   29   34    1     2
+1.06   28   26    0    1    1    0   19   33    0     0
+1.07   46   34    0    2    2    0   33   32    0     1
+1.08   26   14    0    4    4    0   15   17    0     0
+1.09   34   27    0   39   39    0   22   42    0     2
+1.1    23   17    0   10   10    0   14   16    0     0
+1.11   35   29    0    5    5    0   23   41    0     0
+1.12   16   17    0    2    2    0   16   25    0     0
+1.13   36   28    0   11   11    0   20   27    0     0
+1.14   15   24    0   19   19    0   23   20    0     1
+1.15   23   29    0    4    4    0   30   22    0     0
+1.16   33   45    0   23   23    0   36   27    2     1
+1.17   28   46    0    6    6    0   30   41    1     0
+1.18   37   31    0    5    5    0   28   29    0     0
+1.19   31   17    0    2    2    0   16   20    0     0
+1.2    40   21    0    7    7    0   26   35    0     0
+1.21   17   20    0    1    1    0   21   27    0     0
+1.22   23   26    0   10   10    0   23   49    0     0
+1.23   20   12    0    3    3    0   20   20    0     0
+1.24   38   29    0    0    0    0   36   29    0     0
+1.25   28   44    0    1    1    0   37   32    1     0
+1.26   13   19    0    3    3    0   25   21    0     0
+1.27   30   20    0    0    0    0   30   40    0     0
+1.28   19   24    0    0    0    0   27   20    0     0
+1.29   35   34    0    0    0    0   31   30    0     0
+1.3    12   21    0    0    0    0   28   19    0     0
+1.31   24   26    0    2    2    0   23   37    0     0
+1.32   16   30    0    4    4    0   20   36    0     0
+1.33   43   63    0    1    1    0   45   55    1     0
+1.34   16   14    0    0    0    0   20   33    0     0
+1.35   29   25    0    0    0    0   32   35    0     0
+1.36   65   30    0    0    0    0   86   50    0     0
+1.37   84   18    0    0    0    0   30   17    0     0
+1.38   59   21    0    1    1    0   43   39    0     0
+1.39   21   83    0    0    0    0   28   29    0     0
+1.4    31   53    0    0    0    0   43   54    0     0
+1.41   15   13    0    0    0    0   19   18    0     0
+1.42   28   28    0    0    0    0   33   36    0     0
+1.43   21   14    0    2    2    0   28   32    0     0
+1.44   24   21    0    0    0    0   42   49    0     0
+1.45   30   29    0    0    0    0   32   50    0     0
+1.46   27   47    0    0    0    0   10   23    0     0
+1.47   18   50    0    0    0    0   29   40    0     0
+1.48   22   28    0    0    0    0   31   34    0     0
+1.49   28   66    0    2    2    0   60   57    0     1
+1.5    67  124    0    1    1    0  135   97    0     0
+1.51   28   29    0    0    0    0   22   26    0     0
+1.52    9   17    0    0    0    0    9   16    0     0
+1.53   18   16    0    0    0    0   20   28    0     0
+1.54   19    4    0    1    1    0    4   19    0     0
+1.55   18   13    0    0    0    0   15   40    0     0
+1.56   29   16    0    0    0    0   16   42    0     0
+1.57   33    8    0    0    0    0   11   14    0     0
+1.58   57    9    0    0    0    0   42   40    0     0
+1.59   18    9    0    0    0    0    7   45    0     0
+1.6    67    7    0    1    1    0   15   92    0     0
+1.61   18    7    0    0    0    0    4   62    0     0
+1.62   28   13    0    0    0    0    4   30    0     0
+1.63    7    3    0    0    0    0    7   14    0     0
+1.64   18   10    0    0    0    0   12   20    0     0
+1.65   14   12    0    0    0    0   19   19    0     0
+1.66   14    8    0    0    0    0   18   15    0     0
+1.67   38   21    0    1    1    0   28   52    0     0
+1.68   10    5    0    0    0    0    5   12    0     0
+1.69   15    9    0    0    0    0   13   41    0     0
+1.7    15    1    0    0    0    0    6   21    0     0
+1.71   13   11    0    0    0    0   13   36    0     0
+1.72   11    8    0    0    0    0    5   55    0     0
+1.73   15   13    0    0    0    0   17   21    0     0
+1.74    7    4    0    1    1    0   21   15    0     0
+1.75   17   15    1    0    0    0   18  110    0     0
+1.76   10    8    0    0    0    0    9   19    0     0
+1.77    6    3    0    0    0    0    8   16    0     0
+1.78   14   12    0    0    0    0   11   34    0     0
+1.79   13    5    0    0    0    0    4   11    0     0
+1.8    12   17    0    0    0    0   11   26    0     0
+1.81    6    1    0    0    0    0   11   11    0     0
+1.82    6    2    0    0    0    0    8   10    0     0
+1.83    4   13    0    0    0    0    6   17    0     0
+1.84   10    9    0    0    0    0    9   14    0     0
+1.85    4   20    0    1    1    0   13    9    0     0
+1.86    3    5    0    0    0    0   11    4    0     0
+1.87   13   13    0    0    0    0    8   13    0     0
+1.88   18    7    0    1    1    0    4    2    0     0
+1.89   10    6    0    0    0    0   17    9    0     0
+1.9     6    3    0    0    0    0   10   13    0     0
+1.91    8    7    0    0    0    0   16   10    0     0
+1.92    4    4    0    2    2    0    7   10    0     0
+1.93   10   13    0    3    3    0   22   18    0     0
+1.94    3    8    0    0    0    0    9    9    0     0
+1.95   10    7    0    0    0    0   16    8    0     0
+1.96   27   12    0    0    0    0   12   17    0     0
+1.97    9    6    0    1    1    0   11    6    0     0
+1.98   18   15    0    3    3    0   17   21    0     0
+1.99   55   44    1   11   11    0   32   44    0     0
+[1] TRUE
+[1] "sample size is 5986"
+[1] "removing people with missing values"
+[1] "outcome:ln_uacr: 235"
+[1] 1
+247 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+10 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 2
+247 variants to be matched.
+8 variants have been matched; 0 were flipped and 0 were reversed.
+8 variants to be matched.
+8 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 3
+247 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+10 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 4
+247 variants to be matched.
+13 variants have been matched; 0 were flipped and 0 were reversed.
+13 variants to be matched.
+13 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 5
+247 variants to be matched.
+14 variants have been matched; 0 were flipped and 0 were reversed.
+14 variants to be matched.
+14 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 6
+247 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+12 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 7
+247 variants to be matched.
+13 variants have been matched; 0 were flipped and 0 were reversed.
+13 variants to be matched.
+13 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 8
+247 variants to be matched.
+13 variants have been matched; 0 were flipped and 0 were reversed.
+13 variants to be matched.
+13 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 9
+247 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+12 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 10
+247 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+12 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 11
+247 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+10 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 12
+247 variants to be matched.
+15 variants have been matched; 0 were flipped and 0 were reversed.
+15 variants to be matched.
+15 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 13
+247 variants to be matched.
+9 variants have been matched; 0 were flipped and 0 were reversed.
+9 variants to be matched.
+9 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 14
+247 variants to be matched.
+13 variants have been matched; 0 were flipped and 0 were reversed.
+13 variants to be matched.
+13 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 15
+247 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+10 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 16
+247 variants to be matched.
+14 variants have been matched; 0 were flipped and 0 were reversed.
+14 variants to be matched.
+14 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 17
+247 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+12 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 18
+247 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+12 variants to be matched.
+12 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 19
+247 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+10 variants to be matched.
+10 variants have been matched; 0 were flipped and 0 were reversed.
+[1] 20
+247 variants to be matched.
+14 variants have been matched; 0 were flipped and 0 were reversed.
+14 variants to be matched.
+14 variants have been matched; 0 were flipped and 0 were reversed.
+[1] "GWAS and PRS report in subsets. See Rdata output for more details"
+   sample train_n predict_n no_of_snps PRS_score lm_model_r2 RMSE.RMSE
+1       1    5463       288         10  7.619965  0.06956442 0.9843022
+2       2    5463       288          8  6.405530  0.06733519 1.0495948
+3       3    5463       288         10  6.979072  0.07063444 0.9513571
+4       4    5463       288         13  8.030404  0.06911693 0.8855212
+5       5    5463       288         14  8.472413  0.07000652 0.8423026
+6       6    5463       288         12  8.100102  0.07052482 0.8705819
+7       7    5463       288         13  7.660401  0.06965617 0.9855718
+8       8    5463       288         13  8.074404  0.06851992 0.8433371
+9       9    5463       288         12  8.260600  0.06993296 0.7737999
+10     10    5463       288         12  8.008661  0.06931629 0.9301244
+11     11    5463       288         10  6.949438  0.06708010 0.8931322
+12     12    5464       287         15  8.573888  0.07318350 0.9352039
+13     13    5464       287          9  6.915977  0.06628315 0.8265881
+14     14    5464       287         13  8.219781  0.07083290 0.8309788
+15     15    5464       287         10  7.573025  0.06888911 0.9198623
+16     16    5464       287         14  8.142332  0.07068822 0.9712600
+17     17    5464       287         12  8.217187  0.07080853 0.9068299
+18     18    5464       287         12  7.778024  0.06546027 0.8200182
+19     19    5464       287         10  7.227256  0.06991652 1.0205958
+20     20    5464       287         14  8.504416  0.07168816 0.8205924
