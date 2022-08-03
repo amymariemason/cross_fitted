@@ -1,0 +1,4 @@
+Error: unexpected symbol in:
+"        covariate.remove = covariate.remove #c("ldl", "trig", "bmi", "lpa", "sbp"),
+        covar.cutoff"
+Execution halted

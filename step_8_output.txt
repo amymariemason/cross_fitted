@@ -1,0 +1,8 @@
+Loading required package: bigstatsr
+There were 22 warnings (use warnings() to see them)
+[1] 16475407
+[1] 23
+[1] 23
+    user   system  elapsed 
+4431.258 1785.761 1370.920 
+[1] "end of script"
