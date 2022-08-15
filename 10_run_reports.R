@@ -10,19 +10,24 @@ render_report = function(exposure, threshold, splits, covariate.remove) {
         covariate.remove = covariate.remove, #c("ldl", "trig", "bmi", "lpa", "sbp"),
         covar.cutoff = threshold,
         save.all.output = FALSE,
-        save.sample = FALSE  
+        save.sample = FALSE,
+        PHEWAS.check= FALSE 
     ),
     output_file = paste0("/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Output/CFMR-report_", exposure, "_threshold",threshold ,
                          "_splits", splits, "_date", Sys.Date(),".html")
   )
 }
 
-render_report("hdl",5e-6,20, c("ldl", "trig", "bmi", "lpa", "sbp"))
-render_report("ldl",5e-6,20, c("hdl", "trig", "bmi", "lpa", "sbp"))
-render_report("trig",5e-6,20, c("hdl", "ldl", "bmi", "lpa", "sbp"))
-render_report("lpa",5e-6,20, c("hdl", "ldl", "bmi", "trig", "sbp"))
-render_report("sbp",5e-6,20, c("hdl", "ldl", "bmi", "trig", "lpa"))
+#render_report("hdl",5e-7,20, c("ldl", "trig", "bmi", "lpa", "sbp"))
+#render_report("ldl",5e-7,20, c("hdl", "trig", "bmi", "lpa", "sbp"))
+#render_report("trig",5e-7,20, c("hdl", "ldl", "bmi", "lpa", "sbp"))
+#render_report("lpa",5e-7,20, c("hdl", "ldl", "bmi", "trig", "sbp"))
+render_report("bmi",5e-7,20, c("hdl", "ldl", "sbp", "trig", "lpa"))
+render_report("bmi",5e-7,40, c("hdl", "ldl", "sbp", "trig", "lpa"))
 render_report("bmi",5e-6,20, c("hdl", "ldl", "sbp", "trig", "lpa"))
+render_report("bmi",5e-6,40, c("hdl", "ldl", "sbp", "trig", "lpa"))
+
+ 
 
 
 
