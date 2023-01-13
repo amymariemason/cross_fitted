@@ -42,7 +42,6 @@ library(bigsnpr)
 library(dplyr)
 library(cowplot)
 library(ieugwasr)
-#library(ivreg)
 library(ivtools)
 
 #inputs

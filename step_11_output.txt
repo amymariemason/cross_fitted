@@ -217,8 +217,12 @@ API: public: http://gwas-api.mrcieu.ac.uk/
 [1] TRUE
 [1] "sample size is 5986"
 [1] "removing people with missing values"
-[1] "outcome:ln_uacr: 235"
+[1] "outcome:BUN: 375"
+[1] "removing people with missing covariates"
+[1] "outcome:BUN: 375"
+[1] "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Output/v2Black_GWAS_lg_BUN_GWAS_manhattan.png"
 null device 
           1 
+[1] "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Output/v2Black_GWAS_lg_BUN_GWAS_qq.png"
 null device 
           1 
