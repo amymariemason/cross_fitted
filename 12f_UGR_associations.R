@@ -1,8 +1,12 @@
-# Check instrument for BUN & eGFR in UKB
+# Runs associations in Black UKB for given instrument from UGR
+# if changeing instrument, will need to edit code with correct heading names
+
+
+
+
 # set parameters
-params<- list(exposure = "eGFR",
-              exposure_family = "linear", # setting not implemented, change if binary exposure
-              sig_cutoffs=  5e-7,
+params<- list(exposure = "haem",
+              exposure_family = "logistic", 
               covar.num = c("ages","PC1","PC2","PC3","PC4", "PC5", "PC6","PC7","PC8","PC9", "PC10"),
               covar.factor = c("sex"),
               path.input = "",
@@ -10,10 +14,9 @@ params<- list(exposure = "eGFR",
               path.sample = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/data/black.sample",
               path.sample_stats = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/data/sample-stats.txt",
               path.output = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Output/",
-              path.names_out_prefix =  "Black_GWAS_", # will add outcome & split#
-              path.instrument = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/BUN_CKDGen_formated_clumped",
-              name.instrument ="BUN"
- # checks snps selected with phewas, remove if reach covar.cutoff 
+              path.names_out_prefix =  "Black_assoc_", # will add outcome & split#
+              path.instrument = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/UGR_at_0.00005",
+              name.instrument ="UGR_BUN_v2"
 )
 
 
@@ -99,19 +102,16 @@ print(paste0("outcome:", var.name, ": ",length(missing)))
 
 #input BUN instrument
 library(readr)
-BUN_CKDGen_formated_clumped <- read_table(params$path.instrument)
+BUN_UGR<- read.csv(params$path.instrument, sep="")%>%
+  transmute(a0=allele0, a1=allele1, 
+            beta=beta,  
+            chr=chr, pos=ps, eaf=af, se=se)
 # match up to genome
-found<- which(rsids %in% BUN_CKDGen_formated_clumped$SNP)
-details<-tibble(snp=rsids[found], chr=CHR[found], pos=POS[found])
+found<- which(POS %in% BUN_UGR$pos)
+details<-tibble(snp=rsids[found], chr=CHR[found], pos=POS[found], 
+                allele1=bigSNP$map$allele1[found], allele2=bigSNP$map$allele2[found], freq= bigSNP$map$freq[found])
 
-BUN_CKDGen_formated_clumped<- merge(x=BUN_CKDGen_formated_clumped, y=details, by.x="SNP", by.y="snp", keep.y=TRUE, keep.x=FALSE)
-BUN_CKDGen_formated_clumped <- BUN_CKDGen_formated_clumped %>%
-  transmute(rsid=SNP,a0=other_allele.exposure, a1=effect_allele.exposure, 
-              beta=beta.exposure,  
-            chr=chr, pos=pos, eaf=eaf.exposure, se=se.exposure)
-
-
-
+BUN_UGR2<- merge(x=BUN_UGR, y=details, by=c("chr", "pos"), keep.y=TRUE, keep.x=FALSE)
 
 
 sum_stats<-bigSNP$map %>%
@@ -120,9 +120,26 @@ sum_stats<-bigSNP$map %>%
 
 # check strand flipping before finishing this
 
-match_snps<- snp_match(sumstats=BUN_CKDGen_formated_clumped, info_snp=sum_stats, strand_flip=FALSE, return_flip_and_rev = TRUE)
+match2<- snp_match(sumstats=BUN_UGR2, info_snp=sum_stats, strand_flip=FALSE, return_flip_and_rev = TRUE)
 
 
+# check frequencies for sense
+match2$eaf<-ifelse(match2$`_REV_`==TRUE, 1- match2$eaf, match2$eaf)
+match2$palidrome<- (match2$a0 %in% c("C","G") & match2$a1 %in% c("C","G"))|(match2$a0 %in% c("A", "T") & match2$a1 %in% c("A", "T"))
+match2$ambigeous_freq<-((match2$eaf>0.42 & match2$eaf<0.58)|(match2$freq>0.42 & match2$freq<0.58))
+match2$mismatch_freq<-((match2$freq<0.42 & match2$eaf>0.58)|(match2$eaf<0.42 & match2$freq>0.58))
+
+
+# flip if palidrom and mismatched direction
+match2$beta.ss<- ifelse(match2$palidrome & match2$mismatch_freq,
+                        -1*match2$beta, 
+                        match2$beta)
+match2$eaf.ss<- ifelse(match2$palidrome & match2$mismatch_freq,
+                       1-match2$eaf, 
+                       match2$eaf)
+
+
+match_snps<-match2
 # create subset of clumped variants
 ind.keep= match_snps$`_NUM_ID_`
 
@@ -134,7 +151,7 @@ df_beta2<-df_beta0[ind.keep,]
 
 # DO THE GWAS
 new_var= params$exposure
-y_index =  which(!is.na(sample[,var.name]))
+y_index =  which(!is.na(sample[,new_var]))
 
 if(params$exposure_family=="linear"){
   
@@ -167,13 +184,10 @@ GWAS_output$chr<-CHR[ind.keep]
 GWAS_output$pos<-POS[ind.keep]
 GWAS_output$rsid<-rsids[ind.keep]
 GWAS_output$eaf<- bigSNP$map$freq[ind.keep]
-GWAS_output$effect<-bigSNP$map$allele1[ind.keep]
-GWAS_output$other<-bigSNP$map$allele2[ind.keep]
+GWAS_output$effect<-bigSNP$map$allele2[ind.keep]
+GWAS_output$other<-bigSNP$map$allele1[ind.keep]
 
 
 
 # save output  
-  write.table(GWAS_output, file = path.all_data_out)
-
-
- 
+write.table(GWAS_output, file = path.all_data_out)

@@ -1,9 +1,9 @@
 #!/bin/bash
 #! What is this job called?
-#SBATCH --job-name=instrument
+#SBATCH --job-name=black_GWAS
 #! What should I call the reports
-##SBATCH --output="/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Rcode/Rmarkdown_%A_%a"
-##SBATCH --error="/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Rcode/Rmarkdown_%A_%a"
+#SBATCH --output="/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Rcode/GWAS_%A"
+#SBATCH --error="/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Rcode/GWAS_%A"
 #! Which project should be charged:
 #SBATCH -A BURGESS-SL3-CPU
 #! Which partition/cluster am I using?
@@ -24,4 +24,4 @@ module load gcc/5
 module load R/4.2.0
 module load pandoc/2.0.6
 
-Rscript "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Rcode/GWAS_UACR_UKB.R" message_warning.R >& /rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Rcode/step_11_output.txt
+Rscript "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Rcode/GWAS_blackcohort.R" --exposure="ischtia" --exposure_family="logistic" 

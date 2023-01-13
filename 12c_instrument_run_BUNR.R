@@ -1,8 +1,7 @@
 # Check instrument for BUN & eGFR in UKB
 # set parameters
-params<- list(exposure = "eGFR",
-              exposure_family = "linear", # setting not implemented, change if binary exposure
-              sig_cutoffs=  5e-7,
+params<- list(exposure = "cad_int",
+              exposure_family = "logistic", # setting not implemented, change if binary exposure
               covar.num = c("ages","PC1","PC2","PC3","PC4", "PC5", "PC6","PC7","PC8","PC9", "PC10"),
               covar.factor = c("sex"),
               path.input = "",
@@ -10,17 +9,11 @@ params<- list(exposure = "eGFR",
               path.sample = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/data/black.sample",
               path.sample_stats = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/data/sample-stats.txt",
               path.output = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/Output/",
-              path.names_out_prefix =  "Black_GWAS_", # will add outcome & split#
-              path.instrument = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/BUN_CKDGen_formated_clumped",
+              path.names_out_prefix =  "Black_assoc_", # will add outcome & split#
+              path.instrument = "/rds/project/asb38/rds-asb38-ceu-ukbiobank/projects/P7439/zz_mr/Amy/black/BUN_CKDGEN_in_UGR",
               name.instrument ="BUN"
- # checks snps selected with phewas, remove if reach covar.cutoff 
+              # checks snps selected with phewas, remove if reach covar.cutoff 
 )
-
-
-# load packages
-library(bigsnpr)
-library(dplyr)
-library(ieugwasr)
 
 
 #inputs
@@ -107,7 +100,7 @@ details<-tibble(snp=rsids[found], chr=CHR[found], pos=POS[found])
 BUN_CKDGen_formated_clumped<- merge(x=BUN_CKDGen_formated_clumped, y=details, by.x="SNP", by.y="snp", keep.y=TRUE, keep.x=FALSE)
 BUN_CKDGen_formated_clumped <- BUN_CKDGen_formated_clumped %>%
   transmute(rsid=SNP,a0=other_allele.exposure, a1=effect_allele.exposure, 
-              beta=beta.exposure,  
+            beta=beta.exposure,  
             chr=chr, pos=pos, eaf=eaf.exposure, se=se.exposure)
 
 
@@ -134,7 +127,7 @@ df_beta2<-df_beta0[ind.keep,]
 
 # DO THE GWAS
 new_var= params$exposure
-y_index =  which(!is.na(sample[,var.name]))
+y_index =  which(!is.na(sample[,new_var]))
 
 if(params$exposure_family=="linear"){
   
@@ -167,13 +160,11 @@ GWAS_output$chr<-CHR[ind.keep]
 GWAS_output$pos<-POS[ind.keep]
 GWAS_output$rsid<-rsids[ind.keep]
 GWAS_output$eaf<- bigSNP$map$freq[ind.keep]
-GWAS_output$effect<-bigSNP$map$allele1[ind.keep]
-GWAS_output$other<-bigSNP$map$allele2[ind.keep]
+GWAS_output$effect<-bigSNP$map$allele2[ind.keep]
+GWAS_output$other<-bigSNP$map$allele1[ind.keep]
 
 
 
 # save output  
-  write.table(GWAS_output, file = path.all_data_out)
+write.table(GWAS_output, file = path.all_data_out)
 
-
- 
